@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Пульт телевизора</title><link rel="stylesheet" href="popup.css"></head>
+<body><main><header><div><div class="eyebrow">ДОМАШНИЙ SAMSUNG</div><h1>YouTube → телевизор</h1></div><button id="settings" class="icon" aria-label="Открыть настройки" title="Настройки">⚙</button></header>
+<p id="tvState" class="tv-state" aria-live="polite">Проверяю связь…</p>
+<button id="handoff" class="primary">Продолжить текущий ролик на ТВ</button><p id="videoHint" class="hint">Позиция берётся из открытого ролика YouTube.</p>
+<section aria-label="Воспроизведение"><div class="row"><button data-command="pause">Ⅱ Пауза</button><button data-command="play">▶ Продолжить</button></div></section>
+<section aria-label="Громкость"><div class="volume-heading"><label for="volume">Громкость</label><output id="volumeValue" for="volume">—</output></div><input id="volume" type="range" min="0" max="100" step="1" value="0" aria-valuetext="Неизвестна" disabled><button data-command="mute" id="mute">Выключить звук</button></section>
+<div class="footer"><button data-command="power_off" class="power">⏻ Выключить ТВ</button><button id="refresh" class="text">Обновить</button></div>
+<p id="status" role="status" aria-live="polite">Пульт работает и без вкладки YouTube.</p>
+</main><script type="module" src="popup.js"></script></body></html>

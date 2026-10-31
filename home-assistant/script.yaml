@@ -1,0 +1,83 @@
+samsung_youtube_handoff:
+  alias: Samsung — YouTube с компьютера
+  description: Включает Samsung, открывает YouTube и передаёт ролик с заданной позиции.
+  mode: single
+  max_exceeded: warning
+  fields:
+    video_id:
+      name: YouTube Video ID
+      required: true
+      selector:
+        text:
+    position:
+      name: Позиция в секундах
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 604800
+          mode: box
+  sequence:
+    - if:
+        - condition: template
+          value_template: >-
+            {{ not (video_id | default('') | string | regex_match('^[A-Za-z0-9_-]{11}$'))
+               or not is_number(position | default(''))
+               or not (0 <= (position | float(-1)) <= 604800) }}
+      then:
+        - stop: Некорректный ролик или позиция YouTube.
+          error: true
+    - variables:
+        boot_deadline: "{{ as_timestamp(now()) + 120 }}"
+    - action: media_player.turn_on
+      target:
+        entity_id: media_player.samsung_tv
+    - repeat:
+        sequence:
+          - if:
+              - condition: template
+                value_template: "{{ not is_state('media_player.samsung_tv', 'on') and states('remote.tv_ir') not in ['unknown', 'unavailable'] }}"
+            then:
+              - action: remote.send_command
+                continue_on_error: true
+                target:
+                  entity_id: remote.tv_ir
+                data:
+                  command: 'samsung32:addr=0x07,cmd=0x99'
+          - wait_template: "{{ is_state('media_player.samsung_tv', 'on') }}"
+            timeout: '00:00:10'
+            continue_on_timeout: true
+        until:
+          - condition: template
+            value_template: "{{ is_state('media_player.samsung_tv', 'on') or repeat.index >= 3 or as_timestamp(now()) >= boot_deadline | float }}"
+    # Give Wi-Fi and the HA integration time to become ready after power-on.
+    - wait_template: "{{ is_state('media_player.samsung_tv', 'on') }}"
+      timeout:
+        seconds: "{{ [0, boot_deadline | float - as_timestamp(now())] | max }}"
+      continue_on_timeout: true
+    - if:
+        - condition: template
+          value_template: "{{ not is_state('media_player.samsung_tv', 'on') }}"
+      then:
+        - stop: Телевизор не появился в Home Assistant за 120 секунд. Проверьте Wi-Fi, питание и ИК-пульт.
+          error: true
+    - action: media_player.select_source
+      target:
+        entity_id: media_player.samsung_tv
+      data:
+        source: YouTube
+    - action: shell_command.samsung_youtube_handoff
+      data:
+        video_id: "{{ video_id }}"
+        position: "{{ position | int }}"
+      response_variable: handoff
+    - if:
+        - condition: template
+          value_template: "{{ handoff.returncode != 0 }}"
+      then:
+        - stop: Не удалось передать ролик YouTube. Проверьте доступ ТВ и HA к YouTube и откройте YouTube на ТВ.
+          error: true
+    - variables:
+        result: "{{ handoff.stdout | from_json }}"
+    - stop: Команда отправлена приложению YouTube.
+      response_variable: result

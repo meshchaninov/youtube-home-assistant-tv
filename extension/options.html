@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>YouTube → телевизор</title><link rel="stylesheet" href="options.css"></head>
+<body><main><div class="brand">▶ → ▣</div><h1>Продолжить на телевизоре</h1><p>Отправляйте ролик на Samsung с нужной секунды и управляйте телевизором из всплывающего пульта.</p>
+<form id="settings"><label>Адрес Home Assistant<input id="haUrl" type="url" required placeholder="http://homeassistant.local:8123" autocomplete="off"></label>
+<label>Долгосрочный токен доступа<input id="token" type="password" autocomplete="off" required spellcheck="false"></label><small>Home Assistant → профиль → Безопасность → Долгосрочные токены доступа → Создать токен. Используйте отдельный токен для расширения. Он хранится локально в этом браузере, без синхронизации.</small>
+<label>Скрипт Home Assistant<input id="script" required pattern="[a-z0-9_]+" value="samsung_youtube_handoff" spellcheck="false"></label>
+<label class="check"><input id="pause" type="checkbox" checked> Ставить ролик на компьютере на паузу при отправке</label>
+<button type="submit">Сохранить и разрешить доступ</button> <button id="test" type="button" class="secondary">Проверить связь</button>
+<p id="message" role="status" aria-live="polite"></p></form>
+<section><h2>Как пользоваться</h2><p>Закрепите расширение в панели Chrome или Brave. Откройте ролик, дождитесь окончания рекламы, нажмите значок расширения и выберите «Продолжить текущий ролик на ТВ».</p><p>В пульте доступны пауза, продолжение, громкость, переключение звука и выключение ТВ. Кнопки пульта работают с любой вкладки. На значке: <b>…</b> — включение и передача, <b>✓</b> — YouTube принял команду, <b>!</b> — ошибка. Наведите на значок, чтобы прочитать подробности.</p><p>При ошибке ролик на компьютере продолжит воспроизведение, если вы не меняли позицию. При обрыве сети проверьте телевизор перед повторной отправкой.</p></section>
+<section><h2>Последний запрос</h2><p id="lastStatus" aria-live="polite">Запросов пока нет.</p></section>
+</main><script type="module" src="options.js"></script></body></html>

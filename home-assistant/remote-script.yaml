@@ -1,0 +1,96 @@
+samsung_youtube_remote:
+  alias: Samsung — пульт из браузера
+  description: Управление воспроизведением, громкостью и питанием из расширения.
+  mode: queued
+  max: 4
+  fields:
+    command:
+      name: Команда
+      required: true
+      selector:
+        select:
+          options: [play, pause, volume_up, volume_down, volume_set, mute, power_off]
+    volume:
+      name: Громкость в процентах
+      selector:
+        number:
+          min: 0
+          max: 100
+          step: 1
+          mode: slider
+  sequence:
+    - if:
+        - condition: template
+          value_template: "{{ command | default('') not in ['play', 'pause', 'volume_up', 'volume_down', 'volume_set', 'mute', 'power_off'] }}"
+      then:
+        - stop: Неизвестная команда пульта.
+          error: true
+    - if:
+        - condition: template
+          value_template: >-
+            {{ command == 'volume_set' and
+               (not is_number(volume | default('')) or
+                not (0 <= volume | float(-1) <= 100) or
+                (volume | float(-1)) != (volume | int(-2))) }}
+      then:
+        - stop: Громкость должна быть целым числом от 0 до 100.
+          error: true
+    - if:
+        - condition: template
+          value_template: "{{ not is_state('media_player.samsung_tv', 'on') }}"
+      then:
+        - stop: Телевизор выключен или ещё подключается к Wi-Fi. Дождитесь его появления в Home Assistant.
+          error: true
+    - choose:
+        - conditions: "{{ command == 'play' }}"
+          sequence:
+            - action: media_player.media_play
+              target:
+                entity_id: media_player.samsung_tv
+        - conditions: "{{ command == 'pause' }}"
+          sequence:
+            - action: media_player.media_pause
+              target:
+                entity_id: media_player.samsung_tv
+        - conditions: "{{ command == 'volume_up' }}"
+          sequence:
+            - action: media_player.volume_up
+              target:
+                entity_id: media_player.samsung_tv
+        - conditions: "{{ command == 'volume_down' }}"
+          sequence:
+            - action: media_player.volume_down
+              target:
+                entity_id: media_player.samsung_tv
+        - conditions: "{{ command == 'volume_set' }}"
+          sequence:
+            - action: media_player.volume_set
+              target:
+                entity_id: media_player.samsung_tv
+              data:
+                volume_level: "{{ (volume | float) / 100 }}"
+        - conditions: "{{ command == 'mute' }}"
+          sequence:
+            - if:
+                - condition: template
+                  value_template: "{{ state_attr('media_player.samsung_tv', 'is_volume_muted') is none }}"
+              then:
+                - stop: Home Assistant не знает текущее состояние звука. Обновите пульт.
+                  error: true
+            - action: media_player.volume_mute
+              target:
+                entity_id: media_player.samsung_tv
+              data:
+                is_volume_muted: "{{ not state_attr('media_player.samsung_tv', 'is_volume_muted') }}"
+        - conditions: "{{ command == 'power_off' }}"
+          sequence:
+            - action: media_player.turn_off
+              target:
+                entity_id: media_player.samsung_tv
+    - variables:
+        result:
+          ok: true
+          command: "{{ command }}"
+          status: command_sent
+    - stop: Команда отправлена телевизору.
+      response_variable: result

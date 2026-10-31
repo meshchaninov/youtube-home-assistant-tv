@@ -1,0 +1,3 @@
+# Add inside the EXISTING shell_command section in configuration.yaml.
+samsung_youtube_handoff: >-
+  python3 /config/helpers/youtube_handoff.py {{ video_id }} {{ position | int }}
